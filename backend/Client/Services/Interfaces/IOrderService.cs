@@ -1,0 +1,12 @@
+﻿using Client.DTOs.Order;
+
+namespace Client.Services.Interfaces
+{
+    public interface IOrderService
+    {
+        Task<(int orderId, string status, decimal orderTotal)> CreateAsync(Guid userId, CreateOrderDto createOrderDto);
+        Task<List<ResponseOrderDto>> GetByUserIdAsync(Guid userId);
+        Task<ResponseOrderDto> GetByPhoneAsync(Guid userId, string phone);
+        Task UpdateAsync(Guid userId, int orderId, UpdateOrderDto updateOrderDto);
+    }
+}

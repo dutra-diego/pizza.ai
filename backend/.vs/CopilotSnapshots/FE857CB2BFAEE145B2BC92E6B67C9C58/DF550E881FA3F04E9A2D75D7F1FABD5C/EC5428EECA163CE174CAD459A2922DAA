@@ -1,0 +1,12 @@
+﻿using Client.DTOs.Flavor;
+using System.Threading.Tasks;
+
+namespace Client.Services
+{
+    public interface IFlavorService
+    {
+        Task<List<ResponseFlavorDto>> GetByProductIdAsync(Guid userId, Guid productId);
+        Task<ResponseFlavorDto> CreateAsync(Guid userId, CreateFlavorDto flavorDto);
+        Task UpdateAsync(Guid userId, Guid flavorId, UpdateFlavorDto flavorDto);
+    }
+}

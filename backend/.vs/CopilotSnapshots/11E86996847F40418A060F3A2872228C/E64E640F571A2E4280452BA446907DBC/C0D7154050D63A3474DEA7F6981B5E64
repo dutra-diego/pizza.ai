@@ -1,0 +1,113 @@
+﻿using Client.Enums;
+using Client.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+namespace Client.Data
+{
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions options): base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("client");
+
+            modelBuilder.Entity<ClientUser>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<Enterprise>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<Flavor>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<OrderProduct>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<OrderProductFlavor>(entity =>
+            {
+                entity.Property(e => e.Id)
+                    .HasDefaultValueSql("gen_random_uuid()")
+                    .ValueGeneratedOnAdd();
+            });
+
+            // Mapeamento personalizado para suportar valores legados do banco (Português)
+            var orderStatusConverter = new ValueConverter<OrderStatus, string>(
+                v => v switch
+                {
+                    OrderStatus.Cancelled => "Cancelado",
+                    OrderStatus.InProduction => "Em produção",
+                    OrderStatus.OutForDelivery => "Saiu para entrega",
+                    OrderStatus.Completed => "Concluido", // Sem acento, conforme banco legado
+                    _ => v.ToString()
+                },
+                v => v switch
+                {
+                    "Cancelado" => OrderStatus.Cancelled,
+                    "Em produção" => OrderStatus.InProduction,
+                    "Saiu para entrega" => OrderStatus.OutForDelivery,
+                    "Concluido" => OrderStatus.Completed,
+                    "Concluído" => OrderStatus.Completed, // Fallback para versão com acento
+                    _ => Enum.Parse<OrderStatus>(v)
+                });
+
+            var productSizeConverter = new ValueConverter<ProductSize, string>(
+                 v => v switch
+                 {
+                     ProductSize.Small => "Pequena",
+                     ProductSize.Medium => "Média",
+                     ProductSize.Giant => "Gigante",
+                     _ => v.ToString()
+                 },
+                 v => v switch
+                 {
+                     "Pequena" => ProductSize.Small,
+                     "Média" => ProductSize.Medium,
+                     "Gigante" => ProductSize.Giant,
+                     _ => Enum.Parse<ProductSize>(v)
+                 });
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Status)
+                .HasConversion(orderStatusConverter);
+
+            modelBuilder.Entity<OrderProduct>()
+                .Property(op => op.Size)
+                .HasConversion(productSizeConverter);
+
+            base.OnModelCreating(modelBuilder);
+        }
+        public DbSet<ClientUser> ClientUsers { get; set; }
+        public DbSet<Enterprise> Enterprises { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<Flavor> Flavors { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderProduct> OrderProducts { get; set; }
+        public DbSet<OrderProductFlavor> OrderProductFlavors { get; set; }
+
+    }
+}

@@ -1,0 +1,27 @@
+﻿var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(); // Alterado para AddSwaggerGen
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger(); // Alterado para UseSwagger
+    app.UseSwaggerUI(options =>
+    {
+        options.DocumentTitle = "API Teste";
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "API Teste v1"); // Alterado para /swagger/v1/swagger.json
+    });
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();  

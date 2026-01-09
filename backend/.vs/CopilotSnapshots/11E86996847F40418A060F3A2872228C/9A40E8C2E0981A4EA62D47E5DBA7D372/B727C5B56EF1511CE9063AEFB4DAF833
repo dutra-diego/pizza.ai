@@ -1,0 +1,256 @@
+﻿using Client.Data;
+using Client.DTOs.Order;
+using Client.Models;
+using Client.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace Client.Services.Implementations
+{
+    public class OrderService : IOrderService
+    {
+        private readonly AppDbContext _appDbContext;
+        public OrderService(AppDbContext appDbContext)
+        {
+            _appDbContext = appDbContext;
+        }
+
+        private static readonly Dictionary<string, decimal> SizeMultipliers = new()
+        {
+            { "Pequena", 1.0m },
+            { "Média", 1.5m },
+            { "Gigante", 2.5m }
+        };
+
+
+        private static readonly Dictionary<string, int> SliceCountBySize = new()
+        {
+            { "Pequena", 1 },
+            { "Média", 2 },
+            { "Gigante", 4 }
+        };
+
+        public decimal GetSizeMultiplier(string size)
+        {
+            if (!SizeMultipliers.TryGetValue(size, out var multiplier))
+                throw new ArgumentException($"Tamanho inválido: {size}. Use: Pequena, Média, Gigante");
+
+            return multiplier;
+        }
+
+        public int GetSliceCountBySize(string size)
+        {
+            if (!SliceCountBySize.TryGetValue(size, out var sliceCount))
+                throw new ArgumentException($"Tamanho inválido: {size}");
+
+            return sliceCount;
+        }
+
+        public decimal CalculateOrderProductTotal(List<(decimal flavorPrice, int sliceCount)> flavors, int quantity)
+        {
+            if (flavors.Count == 0)
+                throw new ArgumentException("Pelo menos um sabor é necessário");
+
+            var singleUnitPrice = flavors.Sum(f => f.flavorPrice * f.sliceCount);
+            return singleUnitPrice * quantity;
+        }
+
+        public async Task<(int orderId, string status, decimal orderTotal)> CreateAsync(Guid userId, CreateOrderDto createOrderDto)
+        {
+            if (createOrderDto?.OrderProduct == null || createOrderDto.OrderProduct.Count == 0)
+                throw new ArgumentException("Order must contain at least one product");
+
+            var enterprise = await _appDbContext.Enterprises
+                .FirstOrDefaultAsync(e => e.ClientUserId == userId);
+
+            if (enterprise == null)
+                throw new KeyNotFoundException("User does not have an enterprise");
+
+            var order = new Order
+            {
+                Name = createOrderDto.Name,
+                Phone = createOrderDto.Phone,
+                DeliveryAddress = createOrderDto.DeliveryAddress,
+                EnterpriseId = enterprise.Id,
+                Status = createOrderDto.Status
+            };
+
+            // PRE-FETCHING DATA TO AVOID N+1 PROBLEM
+            var productIds = createOrderDto.OrderProduct.Select(p => p.ProductId).Distinct().ToList();
+            var productsDict = await _appDbContext.Products
+                .Where(p => productIds.Contains(p.Id) && p.EnterpriseId == enterprise.Id)
+                .ToDictionaryAsync(p => p.Id);
+
+            var allFlavorIds = createOrderDto.OrderProduct
+                .SelectMany(op => op.Flavors)
+                .Select(f => f.FlavorId)
+                .Distinct()
+                .ToList();
+            
+            var flavorsDict = await _appDbContext.Flavors
+                .Where(f => allFlavorIds.Contains(f.Id) && f.EnterpriseId == enterprise.Id)
+                .ToDictionaryAsync(f => f.Id);
+
+            decimal orderTotal = 0;
+
+            foreach (var productDto in createOrderDto.OrderProduct)
+            {
+                if (!productsDict.TryGetValue(productDto.ProductId, out var product))
+                    throw new KeyNotFoundException($"Product not found: {productDto.ProductId}");
+
+                if (!product.Available)
+                    throw new InvalidOperationException($"Product '{product.Name}' is not available");
+
+                int maxSlices = GetSliceCountBySize(productDto.Size);
+                var totalSlices = productDto.Flavors.Sum(f => f.SliceCount);
+
+                if (totalSlices != maxSlices)
+                    throw new InvalidOperationException($"Size '{productDto.Size}' requires exactly {maxSlices} slices, but {totalSlices} were provided");
+
+                var flavorIds = productDto.Flavors.Select(f => f.FlavorId).ToList();
+                
+                // Filter flavors for this specific item from the pre-fetched dictionary
+                var flavors = new List<Flavor>();
+                foreach(var id in flavorIds.Distinct())
+                {
+                    if (flavorsDict.TryGetValue(id, out var f))
+                    {
+                        flavors.Add(f);
+                    }
+                }
+
+                if (flavors.Count != flavorIds.Count)
+                    throw new KeyNotFoundException("One or more flavors not found");
+
+                var flavorPrices = productDto.Flavors.Select(f =>
+                {
+                    var flavor = flavors.First(fl => fl.Id == f.FlavorId);
+                    return (flavor.Price, f.SliceCount);
+                }).ToList();
+
+                var totalPrice = CalculateOrderProductTotal(flavorPrices, productDto.Quantity);
+                orderTotal += totalPrice;
+
+                var orderProduct = new OrderProduct
+                {
+                    ProductId = product.Id,
+                    Size = productDto.Size,
+                    Quantity = productDto.Quantity,
+                    TotalPrice = totalPrice
+                };
+
+                foreach (var flavorDto in productDto.Flavors)
+                {
+                    var flavor = flavors.First(f => f.Id == flavorDto.FlavorId);
+                    orderProduct.OrderProductFlavors.Add(new OrderProductFlavor
+                    {
+                        FlavorId = flavor.Id,
+                        SliceCount = flavorDto.SliceCount,
+                        FlavorPriceAtTime = flavor.Price
+                    });
+                }
+
+                order.OrderProducts.Add(orderProduct);
+            }
+
+            _appDbContext.Orders.Add(order);
+            await _appDbContext.SaveChangesAsync();
+
+            return (order.Id, order.Status, orderTotal);
+        }
+
+        public async Task<List<ResponseOrderDto>> GetByUserIdAsync(Guid userId)
+        {
+            var orders = await _appDbContext.Orders
+                .Where(o => o.Enterprise.ClientUserId == userId)
+                .Include(o => o.OrderProducts)
+                    .ThenInclude(op => op.OrderProductFlavors)
+                        .ThenInclude(opf => opf.Flavor)
+                .Include(o => o.OrderProducts)
+                    .ThenInclude(op => op.Product)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var responseOrders = orders.Select(o => new ResponseOrderDto(
+                o.Id,
+                o.Name,
+                o.Phone,
+                o.DeliveryAddress,
+                o.CreatedAt,
+                o.OrderProducts.Sum(op => op.TotalPrice),
+                o.Status,
+                o.OrderProducts.Select(op => new OrderProductResponseDto(
+                    op.Id,
+                    op.ProductId,
+                    op.Product?.Name ?? string.Empty,
+                    op.Size,
+                    op.Quantity,
+                    op.OrderProductFlavors.Sum(opf => opf.FlavorPriceAtTime * opf.SliceCount),
+                    1m,
+                    op.TotalPrice / (op.Quantity == 0 ? 1 : op.Quantity),
+                    op.TotalPrice,
+                    op.OrderProductFlavors.Select(opf => new OrderProductFlavorResponseDto(
+                        opf.Id,
+                        opf.Flavor?.Name ?? string.Empty
+                    )).ToList()
+                )).ToList()
+            )).ToList();
+
+            return responseOrders;
+        }
+
+        public async Task<ResponseOrderDto> GetByPhoneAsync(Guid userId, string phone)
+        {
+            var order = await _appDbContext.Orders
+                .Where(o => o.Phone == phone && o.Enterprise.ClientUserId == userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .Include(o => o.OrderProducts)
+                    .ThenInclude(op => op.OrderProductFlavors)
+                        .ThenInclude(opf => opf.Flavor)
+                .Include(o => o.OrderProducts)
+                    .ThenInclude(op => op.Product)
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+                throw new KeyNotFoundException("Order not found");
+
+            var responseOrder = new ResponseOrderDto(
+                order.Id,
+                order.Name,
+                order.Phone,
+                order.DeliveryAddress,
+                order.CreatedAt,
+                order.OrderProducts.Sum(op => op.TotalPrice),
+                order.Status,
+                order.OrderProducts.Select(op => new OrderProductResponseDto(
+                    op.Id,
+                    op.ProductId,
+                    op.Product?.Name ?? string.Empty,
+                    op.Size,
+                    op.Quantity,
+                    op.OrderProductFlavors.Sum(opf => opf.FlavorPriceAtTime * opf.SliceCount),
+                    1m,
+                    op.TotalPrice / (op.Quantity == 0 ? 1 : op.Quantity),
+                    op.TotalPrice,
+                    op.OrderProductFlavors
+                        .Select(opf => new OrderProductFlavorResponseDto(
+                            opf.Id,
+                            opf.Flavor?.Name ?? string.Empty
+                        )).ToList()
+                )).ToList()
+            );
+
+            return responseOrder;
+        }
+
+        public async Task UpdateAsync(Guid userId, int orderId, UpdateOrderDto updateOrderDto)
+        {
+            var rowsAffected = await _appDbContext.Orders
+                .Where(o => o.Id == orderId && o.Enterprise.ClientUserId == userId)
+                .ExecuteUpdateAsync(order => order.SetProperty(o => o.Status, updateOrderDto.Status));
+
+            if (rowsAffected == 0)
+                throw new KeyNotFoundException("Order not found");
+        }
+    }
+}

@@ -1,0 +1,16 @@
+﻿using Client.DTOs.Order;
+using Client.Enums;
+
+namespace Client.Services.Interfaces
+{
+    public interface IOrderService
+    {
+        decimal GetSizeMultiplier(ProductSize size);
+        int GetSliceCountBySize(ProductSize size);
+        decimal CalculateOrderProductTotal(List<(decimal flavorPrice, int sliceCount)> flavors, int quantity);
+        Task<(int orderId, string status, decimal orderTotal)> CreateAsync(Guid userId, CreateOrderDto createOrderDto);
+        Task<List<ResponseOrderDto>> GetByUserIdAsync(Guid userId);
+        Task<ResponseOrderDto> GetByPhoneAsync(Guid userId, string phone);
+        Task UpdateAsync(Guid userId, int orderId, UpdateOrderDto updateOrderDto);
+    }
+}

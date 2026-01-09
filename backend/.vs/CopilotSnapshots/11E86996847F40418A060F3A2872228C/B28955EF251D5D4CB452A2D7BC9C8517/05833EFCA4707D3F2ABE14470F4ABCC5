@@ -1,0 +1,30 @@
+﻿using System.ComponentModel.DataAnnotations;
+using Client.Enums;
+
+namespace Client.Models
+{
+    public class OrderProduct
+    {
+        [Key]
+        public Guid Id { get; set; } 
+
+        [Required]
+        public int OrderId { get; set; }
+        public virtual Order Order { get; set; }
+
+        [Required]
+        public Guid ProductId { get; set; }
+        public virtual Product Product { get; set; }
+
+        [Required]
+        public ProductSize Size { get; set; }
+
+        [Required]
+        public int Quantity { get; set; } = 1;
+
+        [Required]
+        public decimal TotalPrice { get; set; }
+
+        public virtual ICollection<OrderProductFlavor> OrderProductFlavors { get; set; } = new List<OrderProductFlavor>();
+    }
+}

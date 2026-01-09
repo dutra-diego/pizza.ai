@@ -1,0 +1,18 @@
+﻿{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=mult-agent;Username=YOUR_USERNAME;Password=YOUR_PASSWORD;SearchPath=client"
+  },
+  "Jwt": {
+    "Key": "YOUR_SUPER_SECURE_KEY_MIN_32_CHARS",
+    "Issuer": "mult-agent",
+    "Audience": "api300",
+    "ExpirationMinutes": 360
+  }
+}

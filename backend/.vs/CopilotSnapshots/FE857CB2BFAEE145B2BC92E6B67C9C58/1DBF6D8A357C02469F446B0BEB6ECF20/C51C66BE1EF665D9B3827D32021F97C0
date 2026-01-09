@@ -1,0 +1,16 @@
+﻿using Client.DTOs.Enterprise;
+
+namespace Client.Services
+{
+    public class EnterpriseService : IEnterpriseService
+    {
+        public void Create(EnterpriseDTO createEnterprise)
+        {
+            throw new NotImplementedException();
+        }
+        public EnterpriseDTO Get()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

@@ -1,0 +1,30 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Client.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddUniqueIndexToEmail : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientUsers_Email",
+                schema: "client",
+                table: "ClientUsers",
+                column: "Email",
+                unique: true);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "IX_ClientUsers_Email",
+                schema: "client",
+                table: "ClientUsers");
+        }
+    }
+}

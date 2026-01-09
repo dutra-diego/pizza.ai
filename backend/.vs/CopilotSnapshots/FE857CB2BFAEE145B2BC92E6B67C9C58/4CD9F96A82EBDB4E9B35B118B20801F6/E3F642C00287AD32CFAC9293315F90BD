@@ -1,0 +1,92 @@
+﻿using Client.Data;
+using Client.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using static BCrypt.Net.BCrypt;
+using Client.Models;
+using Client.DTOs.ClientUser;
+using Microsoft.EntityFrameworkCore;
+
+namespace Client.Controllers
+{
+    [Route("client-users")]
+    [ApiController]
+    public class ClientUsersController : ControllerBase
+    {
+        private readonly AppDbContext _appDbContext;
+        private readonly IAuthenticationService _authenticationService;
+
+        public ClientUsersController(AppDbContext appDbContext, IAuthenticationService authenticationService)
+        {
+            _appDbContext = appDbContext;
+            _authenticationService = authenticationService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] ClientUserDTO clientUser)
+        {
+            if (clientUser == null)
+            {
+                return BadRequest();
+            }
+            var isUserExist = _appDbContext.ClientUsers.FirstOrDefault(c => c.Email == clientUser.Email);
+            if (isUserExist != null)
+            {
+                return Conflict("User with this email already exists.");
+            }
+
+            var hashedPassword = HashPassword(clientUser.Password, 12);
+
+            var newClient = new ClientUser
+            {
+                Name = clientUser.Name,
+                Email = clientUser.Email,
+                Password = hashedPassword
+            };
+
+
+            _appDbContext.ClientUsers.Add(newClient);
+            await _appDbContext.SaveChangesAsync();
+            var token = _authenticationService.GenerateToken(newClient.Id, newClient.Email);
+            return Ok(new { token });
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] ClientUserLoginDto client)
+        {
+            var clientUser = await _appDbContext.ClientUsers.FirstOrDefaultAsync(c => c.Email.Equals(client.Email));
+            if (clientUser == null)
+            {
+                return NotFound();
+            }
+            if (!Verify(client.Password, clientUser.Password))
+            {
+                return NotFound();
+            }
+
+            var token = _authenticationService.GenerateToken(clientUser.Id, clientUser.Email);
+            return Ok(new { token });
+        }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> Get()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!Guid.TryParse(userId, out var parsedUserId))
+            {
+                return Unauthorized("Unauthorized");
+            }
+
+            var clientUser = await _appDbContext.ClientUsers.FirstOrDefaultAsync(c => c.Id.Equals(parsedUserId));
+            if (clientUser == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(new { clientUser.Email, clientUser.Name });
+        }
+    }
+}

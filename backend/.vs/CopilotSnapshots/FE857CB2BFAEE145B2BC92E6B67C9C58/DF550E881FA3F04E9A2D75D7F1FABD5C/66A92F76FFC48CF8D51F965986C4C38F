@@ -1,0 +1,90 @@
+﻿using Client.Data;
+using Client.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Client.Models;
+using Client.DTOs.Flavor;
+
+namespace Client.Controllers
+{
+    [Route("flavors")]
+    [ApiController]
+    public class FlavorsController : ControllerBase
+    {
+        private readonly AppDbContext _appDbContext;
+
+        public FlavorsController(AppDbContext appDbContext)
+        {
+            _appDbContext = appDbContext;
+        }
+
+        [HttpGet("{productId}")]
+        [Authorize]
+        public async Task<IActionResult> Get(Guid productId)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+            var flavors = await _appDbContext.Flavors.Where(f => f.Enterprise.ClientUserId == parsedUserId && f.ProductId == productId).Select(p => new
+            ResponseFlavorDto(p.ProductId, p.Id, p.Name, p.Price, p.IsAvailable)
+            ).ToListAsync();
+
+            return Ok(flavors);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] CreateFlavorDto flavorDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+            var product = await _appDbContext.Products
+            .FirstOrDefaultAsync(p => p.Id == flavorDto.ProductId &&
+                                 p.Enterprise.ClientUserId == parsedUserId);
+
+            if (product == null)
+                return NotFound(new { error = "Product not found or does not belong to your enterprise" });
+
+            var flavor = new Flavor
+            {
+                ProductId = flavorDto.ProductId,
+                Name = flavorDto.Name,
+                Price = flavorDto.Price,
+                IsAvailable = flavorDto.IsAvailable,
+                EnterpriseId = product.EnterpriseId
+            };
+            _appDbContext.Flavors.Add(flavor);
+            await _appDbContext.SaveChangesAsync();
+            return Created(String.Empty, flavor);
+        }
+
+        [HttpPatch("{flavorId}")]
+        [Authorize]
+        public async Task<IActionResult> Update(Guid flavorId, [FromBody] UpdateFlavorDto flavorDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            var flavor = await _appDbContext.Flavors.Where(f => f.Enterprise.ClientUserId == parsedUserId && f.Id == flavorId).ExecuteUpdateAsync(flavor =>
+            {
+                if (flavorDto.Name != null)
+                    flavor.SetProperty(f => f.Name, flavorDto.Name);
+                if (flavorDto.Price != null)
+                    flavor.SetProperty(f => f.Price, flavorDto.Price.Value);
+                if (flavorDto.IsAvailable != null)
+                    flavor.SetProperty(f => f.IsAvailable, flavorDto.IsAvailable.Value);
+            }
+                );
+            if (flavor == 0)
+            {
+                return NotFound(new { error = "Flavor not found" });
+            }
+
+            return NoContent();
+        }
+    }
+}

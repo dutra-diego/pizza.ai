@@ -1,0 +1,12 @@
+﻿using Client.DTOs.Flavor;
+
+namespace Client.Services
+{
+    public interface IFlavorService
+    {
+        public void Create(CreateFlavorDto flavorName);
+        public void Update(Guid flavorId, UpdateFlavorDto flavorName);
+        public ResponseFlavorDto Get(Guid flavorId);
+
+    }
+}

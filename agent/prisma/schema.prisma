@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  sessionId String
+  credId    String
+  data      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sessionId, credId], map: "unique_credid_per_session")
+  @@index([sessionId])
+}

@@ -1,0 +1,10 @@
+﻿using Client.DTOs.Enterprise;
+
+namespace Client.Services
+{
+    public interface IEnterpriseService
+    {
+        public void Create(EnterpriseDTO createEnterprise);
+        public EnterpriseDTO Get();
+    }
+}

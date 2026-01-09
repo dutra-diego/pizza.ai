@@ -1,0 +1,92 @@
+﻿using Client.Data;
+using Client.DTOs.Enterprise;
+using Client.Models;
+using Client.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
+namespace Client.Controllers
+{
+    [Route("enterprises")]
+    [ApiController]
+    public class EnterprisesController : ControllerBase
+    {
+        private readonly AppDbContext _appDbContext;
+        public EnterprisesController(AppDbContext appDbContext, IAuthenticationService authenticationService)
+        {
+            _appDbContext = appDbContext;
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] EnterpriseDTO enterprise)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+            {
+                return Unauthorized(new { error = "Unauthorized" });
+            }
+
+            if (enterprise == null)
+            {
+                return BadRequest("Enterprise data is required.");
+            }
+            var isUserEnterpriseExists = await _appDbContext.Enterprises
+            .FirstOrDefaultAsync(e => e.ClientUserId == parsedUserId);
+
+            if (isUserEnterpriseExists != null)
+            {
+                return BadRequest(new { error = "User has enterprise." });
+            }
+
+
+
+            var newEnterprise = new Enterprise
+
+            {
+                Name = enterprise.Name,
+                Address = enterprise.Address,
+                ClientUserId = parsedUserId,
+            };
+
+            _appDbContext.Enterprises.Add(newEnterprise);
+            await _appDbContext.SaveChangesAsync();
+
+            return Created();
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Get()
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+            {
+                return Unauthorized(new { error = "Unauthorized" });
+            }
+            var enterprise = await _appDbContext.Enterprises
+               .Where(e => e.ClientUserId == parsedUserId)
+               .Select(e => new EnterpriseResponseDto(
+                   e.Name,
+                   e.Address,
+                   e.Orders.Count(o => o.CreatedAt >= DateTime.UtcNow.AddDays(-7)),
+                   e.Orders.Count(o => o.CreatedAt >= DateTime.UtcNow.AddDays(-14)),
+                   e.Orders.Count(o => o.CreatedAt >= DateTime.UtcNow.AddDays(-30)),
+                     e.Orders
+                .Where(o => o.CreatedAt >= DateTime.UtcNow.AddDays(-30))
+                .SelectMany(o => o.OrderProducts)
+                .Sum(op => op.TotalPrice)
+
+               ))
+               .FirstOrDefaultAsync();
+
+
+            if (enterprise == null)
+                return NotFound(new { error = "Enterprise not found" });
+
+            return Ok(enterprise);
+        }
+    }
+}

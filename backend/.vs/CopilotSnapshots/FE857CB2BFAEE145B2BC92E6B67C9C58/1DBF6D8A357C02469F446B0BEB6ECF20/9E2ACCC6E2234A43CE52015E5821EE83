@@ -1,0 +1,22 @@
+﻿using Client.DTOs.Flavor;
+
+namespace Client.Services
+{
+    public class FlavorService : IFlavorService
+    {
+        public void Create(CreateFlavorDto flavorName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ResponseFlavorDto Get(Guid flavorId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Update(Guid flavorId, UpdateFlavorDto flavorName)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

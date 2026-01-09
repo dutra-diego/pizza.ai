@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+	  <UserSecretsId>b7523074-dc99-4533-a88e-0cf2d4c42b1e</UserSecretsId>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Enums\**" />
+		<Compile Remove="NovaPasta1\**" />
+		<Content Remove="Enums\**" />
+		<Content Remove="NovaPasta1\**" />
+		<EmbeddedResource Remove="Enums\**" />
+		<EmbeddedResource Remove="NovaPasta1\**" />
+		<None Remove="Enums\**" />
+		<None Remove="NovaPasta1\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
+		<PackageReference Include="Microsoft.OpenApi" Version="2.3.0" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.0.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.0.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.0.1" />
+	</ItemGroup>
+
+</Project>

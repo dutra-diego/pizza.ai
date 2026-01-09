@@ -1,0 +1,55 @@
+﻿using Client.DTOs.Flavor;
+using Client.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Client.Controllers
+{
+    [Route("flavors")]
+    [ApiController]
+    public class FlavorsController : ControllerBase
+    {
+        private readonly IFlavorService _flavorService;
+
+        public FlavorsController(IFlavorService flavorService)
+        {
+            _flavorService = flavorService;
+        }
+
+        [HttpGet("{productId}")]
+        [Authorize]
+        public async Task<IActionResult> Get(Guid productId)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            var flavors = await _flavorService.GetByProductIdAsync(parsedUserId, productId);
+            return Ok(flavors);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] CreateFlavorDto flavorDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            var flavor = await _flavorService.CreateAsync(parsedUserId, flavorDto);
+            return Created(string.Empty, flavor);
+        }
+
+        [HttpPatch("{flavorId}")]
+        [Authorize]
+        public async Task<IActionResult> Update(Guid flavorId, [FromBody] UpdateFlavorDto flavorDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            await _flavorService.UpdateAsync(parsedUserId, flavorId, flavorDto);
+            return NoContent();
+        }
+    }
+}

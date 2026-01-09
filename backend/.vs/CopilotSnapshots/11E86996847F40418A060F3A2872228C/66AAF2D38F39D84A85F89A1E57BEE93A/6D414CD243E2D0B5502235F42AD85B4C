@@ -1,0 +1,22 @@
+﻿using Client.DTOs.Flavor;
+
+namespace Client.DTOs.Order
+{
+    public record OrderProductResponseDto(
+      Guid Id,
+      Guid ProductId,
+      string ProductName,
+      string Size,
+      int Quantity,
+      decimal PriceAtTime,
+      decimal PricePerItem,
+      decimal TotalPrice,
+      List<OrderProductFlavorResponseDto> Flavors
+  )
+    {
+        internal object ToList()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

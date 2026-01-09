@@ -1,0 +1,10 @@
+﻿using System.ComponentModel.DataAnnotations;
+using Client.Enums;
+
+namespace Client.DTOs.Order
+{
+    public record UpdateOrderDto
+    (
+       OrderStatus Status
+        );
+}

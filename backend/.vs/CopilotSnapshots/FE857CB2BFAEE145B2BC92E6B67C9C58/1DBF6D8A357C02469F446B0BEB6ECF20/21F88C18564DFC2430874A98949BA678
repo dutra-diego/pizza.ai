@@ -1,0 +1,53 @@
+﻿using Client.Data;
+using Client.DTOs.ClientUser;
+using Client.Models;
+
+namespace Client.Services
+{
+    public class ClientUserService: IClientUserService
+    {
+        private readonly AppDbContext _appDbContext;
+        private readonly IAuthenticationService _authenticationService;
+        public ClientUserService(AppDbContext appDbContext, IAuthenticationService authenticationService)
+        {
+            _appDbContext = appDbContext;
+            _authenticationService = authenticationService;
+        }
+
+        public void Create(ClientUserDTO clientUser)
+        {
+            if (clientUser == null)
+            {
+                return BadRequest();
+            }
+            var isUserExist = _appDbContext.ClientUsers.FirstOrDefault(c => c.Email == clientUser.Email);
+            if (isUserExist != null)
+            {
+                return Conflict("User with this email already exists.");
+            }
+
+            var hashedPassword = HashPassword(clientUser.Password, 12);
+
+            var newClient = new ClientUser
+            {
+                Name = clientUser.Name,
+                Email = clientUser.Email,
+                Password = hashedPassword
+            };
+
+
+            _appDbContext.ClientUsers.Add(newClient);
+            await _appDbContext.SaveChangesAsync();
+            var token = _authenticationService.GenerateToken(newClient.Id, newClient.Email);
+        }
+        public string Login(string email, string password)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ClientUserDTO GetById(Guid clientUserId)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

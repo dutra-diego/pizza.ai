@@ -1,0 +1,244 @@
+﻿using Client.Data;
+using Client.DTOs;
+using Client.DTOs.Order;
+using Client.Models;
+using Client.Models.Client.Models;
+using Client.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
+namespace Client.Controllers
+{
+    [Route("orders")]
+    [ApiController]
+    public class OrdersController : ControllerBase
+    {
+        private readonly AppDbContext _appDbContext;
+        private readonly IOrderService _orderService;
+
+        public OrdersController(AppDbContext appDbContext, IOrderService orderService)
+        {
+            _appDbContext = appDbContext;
+            _orderService = orderService;
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] CreateOrderDto createOrderDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            if (createOrderDto?.OrderProduct == null || createOrderDto.OrderProduct.Count == 0)
+                return BadRequest(new { error = "Order must contain at least one product" });
+
+            var enterprise = await _appDbContext.Enterprises
+                .FirstOrDefaultAsync(e => e.ClientUserId.Equals(parsedUserId));
+
+            if (enterprise == null)
+                return BadRequest(new { error = "User does not have an enterprise" });
+
+            var order = new Order
+            {
+                Name = createOrderDto.Name,
+                Phone = createOrderDto.Phone,
+                DeliveryAddress = createOrderDto.DeliveryAddress,
+                EnterpriseId = enterprise.Id,
+                Status = createOrderDto.Status
+            };
+
+            decimal orderTotal = 0;
+
+            foreach (var productDto in createOrderDto.OrderProduct)
+            {
+                var product = await _appDbContext.Products
+                    .FirstOrDefaultAsync(p => p.Id.Equals(productDto.ProductId) &&
+                                              p.EnterpriseId.Equals(enterprise.Id));
+
+                if (product == null)
+                    return BadRequest(new { error = $"Product not found: {productDto.ProductId}" });
+
+                if (!product.Available)
+                    return BadRequest(new { error = $"Product '{product.Name}' is not available" });
+
+
+                int maxSlices;
+
+                maxSlices = _orderService.GetSliceCountBySize(productDto.Size);
+
+                var totalSlices = productDto.Flavors.Sum(f => f.SliceCount);
+                if (totalSlices != maxSlices)
+                {
+                    return BadRequest(new
+                    {
+                        error = $"Size '{productDto.Size}' requires exactly {maxSlices} slices, but {totalSlices} were provided"
+                    });
+                }
+
+
+                var flavorIds = productDto.Flavors.Select(f => f.FlavorId).ToList();
+                var flavors = await _appDbContext.Flavors
+                    .Where(f => flavorIds.Contains(f.Id) && f.EnterpriseId.Equals(enterprise.Id))
+                    .ToListAsync();
+
+                if (flavors.Count != flavorIds.Count)
+                    return BadRequest(new { error = "One or more flavors not found" });
+
+
+                var flavorPrices = productDto.Flavors.Select(f =>
+                {
+                    var flavor = flavors.First(fl => fl.Id.Equals(f.FlavorId));
+                    return (flavor.Price, f.SliceCount);
+                }).ToList();
+
+                var totalPrice = _orderService.CalculateOrderProductTotal(flavorPrices, productDto.Quantity);
+
+                orderTotal += totalPrice;
+                var orderProduct = new OrderProduct
+                {
+                    ProductId = product.Id,
+                    Size = productDto.Size,
+                    Quantity = productDto.Quantity,
+                    TotalPrice = totalPrice
+
+                };
+
+
+                foreach (var flavorDto in productDto.Flavors)
+                {
+                    var flavor = flavors.First(f => f.Id.Equals(flavorDto.FlavorId));
+                    orderProduct.OrderProductFlavors.Add(new OrderProductFlavor
+                    {
+                        FlavorId = flavor.Id,
+                        SliceCount = flavorDto.SliceCount,
+                        FlavorPriceAtTime = flavor.Price
+                    });
+                }
+
+                order.OrderProducts.Add(orderProduct);
+            }
+
+            _appDbContext.Orders.Add(order);
+            await _appDbContext.SaveChangesAsync();
+
+            return Created(string.Empty, new { orderId = order.Id, order.Status, orderTotal });
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Get()
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            var orders = await _appDbContext.Orders
+                .Where(o => o.Enterprise.ClientUserId.Equals(parsedUserId))
+                .Include(o => o.OrderProducts)
+                .ThenInclude(op => op.OrderProductFlavors)
+                .ThenInclude(opf => opf.Flavor)
+                .Include(o => o.OrderProducts)
+                .ThenInclude(op => op.Product)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+            var responseOrders = orders.Select(o => new ResponseOrderDto(
+                o.Id,
+                o.Name,
+                o.Phone,
+                o.DeliveryAddress,
+                o.CreatedAt,
+                o.OrderProducts.Sum(op => op.TotalPrice),
+                o.Status,
+                o.OrderProducts.Select(op => new OrderProductResponseDto(
+                    op.Id,
+                    op.ProductId,
+                    op.Product?.Name ?? string.Empty,
+                    op.Size,
+                    op.Quantity,
+                    op.OrderProductFlavors.Sum(opf => opf.FlavorPriceAtTime * opf.SliceCount),
+                    1m,
+                    op.TotalPrice / (op.Quantity == 0 ? 1 : op.Quantity),
+                    op.TotalPrice,
+                    op.OrderProductFlavors.Select(opf => new OrderProductFlavorResponseDto(
+                        opf.Id,
+                        opf.Flavor?.Name ?? string.Empty
+                    )).ToList()
+                )).ToList()
+
+            )).ToList();
+            if (responseOrders == null)
+            {
+                return BadRequest(new { error = "Not exists order" });
+            }
+            return Ok(responseOrders);
+        }
+
+        [HttpGet("{phone}")]
+        [Authorize]
+        public async Task<IActionResult> GetById(string phone)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+            var order = await _appDbContext.Orders
+                .Where(o => o.Phone.Equals(phone) && o.Enterprise.ClientUserId.Equals(parsedUserId))
+                .OrderByDescending(o => o.CreatedAt)
+                .Include(o => o.OrderProducts)
+                .ThenInclude(op => op.OrderProductFlavors)
+                .ThenInclude(opf => opf.Flavor)
+                .Include(o => o.OrderProducts)
+                .ThenInclude(op => op.Product)
+                .FirstOrDefaultAsync();
+            if (order == null)
+                return NotFound(new { error = "Order not found" });
+            var responseOrder = new ResponseOrderDto(
+                order.Id,
+                order.Name,
+                order.Phone,
+                order.DeliveryAddress,
+                order.CreatedAt,
+                order.OrderProducts.Sum(op => op.TotalPrice),
+                order.Status,
+                order.OrderProducts.Select(op => new OrderProductResponseDto(
+                    op.Id,
+                    op.ProductId,
+                    op.Product?.Name ?? string.Empty,
+                    op.Size,
+                    op.Quantity,
+                    op.OrderProductFlavors.Sum(opf => opf.FlavorPriceAtTime * opf.SliceCount),
+                    1m,
+                    op.TotalPrice / (op.Quantity == 0 ? 1 : op.Quantity),
+                    op.TotalPrice,
+                    op.OrderProductFlavors
+                        .Select(opf => new OrderProductFlavorResponseDto(
+                                opf.Id,
+                                opf.Flavor?.Name ?? string.Empty
+                         )).ToList()
+                )).ToList()
+
+            );
+            return Ok(responseOrder);
+        }
+
+        [HttpPatch("{orderId}")]
+        [Authorize]
+        public async Task<IActionResult> Update(int orderId, [FromBody] UpdateOrderDto updateOrderDto)
+        {
+            var userId = User.FindFirst("userId")?.Value;
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized(new { error = "Invalid token" });
+
+            var orderUpdate = await _appDbContext.Orders
+            .Where(o => o.Id.Equals(orderId) && o.Enterprise.ClientUserId.Equals(parsedUserId))
+            .ExecuteUpdateAsync(order =>
+            order.SetProperty(o => o.Status, updateOrderDto.Status));
+
+            if (orderUpdate == 0)
+                return NotFound(new { error = "Order not found" });
+            return NoContent();
+        }
+    }
+}
