@@ -1,5 +1,5 @@
 node_modules
-/src/generated/prisma
+prisma/generated
 dist/
 .env
 *.log
