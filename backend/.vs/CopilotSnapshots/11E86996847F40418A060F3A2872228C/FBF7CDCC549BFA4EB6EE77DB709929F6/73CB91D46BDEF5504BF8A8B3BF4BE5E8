@@ -1,9 +1,0 @@
-﻿namespace Client.Enums
-{
-    public enum ProductSize
-    {
-        Small,
-        Medium,
-        Giant
-    }
-}
