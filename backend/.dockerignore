@@ -1,0 +1,35 @@
+# Build outputs
+**/bin
+**/obj
+**/out
+
+# IDE
+.idea
+.vs
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# User-specific files
+*.rsuser
+*.user
+*.userosscache
+
+# Environment files
+appsettings.Local.json
+appsettings.*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test results
+TestResults
+
+# Misc
+*.md
+!README.md

@@ -12,8 +12,10 @@ using Client.Infra;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+if (builder.Environment.EnvironmentName != "Docker")
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+}
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
@@ -109,7 +111,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowLocalhost");
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pizza-ai-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-mult-agent}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: pizza-ai-backend
+    restart: unless-stopped
+    ports:
+      - "7180:7180"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-mult-agent};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};SearchPath=client"
+      Jwt__Key: ${JWT_KEY:-your-super-secure-key-min-32-chars}
+      Jwt__Issuer: ${JWT_ISSUER:-mult-agent}
+      Jwt__Audience: ${JWT_AUDIENCE:-api300}
+      Jwt__ExpirationMinutes: ${JWT_EXPIRATION:-360}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent:
+    build: ./agent
+    container_name: pizza-ai-agent
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      HOST: 0.0.0.0
+      DATABASE_URL_PRISMA: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-mult-agent}?schema=agent"
+      DATABASE_URL_MASTRA: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-mult-agent}?schema=mastra"
+      JWT_KEY: ${JWT_KEY:-your-super-secure-key-min-32-chars}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    volumes:
+      - ./agent:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -1,5 +1,4 @@
 import axios, { type AxiosInstance } from "axios";
-import https from "https";
 import { getAuthToken } from "./cookies";
 
 function addAuthInterceptor(instance: AxiosInstance) {
@@ -12,13 +11,8 @@ function addAuthInterceptor(instance: AxiosInstance) {
 	});
 }
 
-const httpsAgent = new https.Agent({
-	rejectUnauthorized: process.env.NODE_ENV !== "development",
-});
-
 export const api = axios.create({
-	baseURL: "https://localhost:7180",
-	httpsAgent,
+	baseURL: "http://localhost:7180",
 });
 
 export const secondaryApi = axios.create({
