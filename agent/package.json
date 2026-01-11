@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && npx prisma generate",
+    "start": "node dist/http/server.js",
     "dev": "tsx watch src/http/server.ts",
     "mastra": "mastra dev --dir src/mastra/"
   },
