@@ -83,12 +83,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:3000"];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost", policy =>
+    options.AddPolicy("AllowedOrigins", policy =>
     {
         policy
-            .WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
@@ -110,7 +113,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowLocalhost");
+app.UseCors("AllowedOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 
