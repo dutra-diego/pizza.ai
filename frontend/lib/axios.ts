@@ -12,11 +12,11 @@ function addAuthInterceptor(instance: AxiosInstance) {
 }
 
 export const api = axios.create({
-	baseURL: "http://localhost:7180",
+	baseURL: process.env.NEXT_PUBLIC_FIRST_API,
 });
 
 export const secondaryApi = axios.create({
-	baseURL: "http://localhost:8080",
+	baseURL: process.env.NEXT_PUBLIC_SECONDARY_API,
 });
 
 addAuthInterceptor(api);

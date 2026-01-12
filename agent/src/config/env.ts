@@ -8,6 +8,7 @@ const envSchema = z.object({
 	DATABASE_URL_MASTRA: z.string().min(1, "DATABASE_URL_MASTRA is required"),
 	CORS_ORIGIN: z.string().default("http://localhost:3000"),
 	JWT_KEY: z.string().min(1, "JWT_KEY is required"),
+	BACKEND_URL: z.string().default("http://localhost:7180"),
 });
 
 export const env = envSchema.parse(process.env);

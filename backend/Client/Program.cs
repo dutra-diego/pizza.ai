@@ -12,11 +12,6 @@ using Client.Infra;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Environment.EnvironmentName != "Docker")
-{
-    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
-}
-
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -100,15 +95,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await context.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS client");
+}
+
 app.UseExceptionHandler();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.DocumentTitle = "API Teste";
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "API Teste v1");
+        options.DocumentTitle = "API Client";
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "API Client v1");
         options.RoutePrefix = "docs";
     });
 }
@@ -119,4 +121,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

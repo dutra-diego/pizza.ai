@@ -18,7 +18,7 @@ namespace Client.Services.Implementations
             _authenticationService = authenticationService;
         }
 
-        public async Task<string> CreateAsync(ClientUserDTO clientUser)
+        public async Task CreateAsync(ClientUserDTO clientUser)
         {
             if (clientUser == null)
                 throw new ArgumentNullException(nameof(clientUser), "Client user data is required");
@@ -40,9 +40,6 @@ namespace Client.Services.Implementations
 
             _appDbContext.ClientUsers.Add(newClient);
             await _appDbContext.SaveChangesAsync();
-
-            var token = _authenticationService.GenerateToken(newClient.Id, newClient.Email);
-            return token;
         }
 
         public async Task<string> LoginAsync(ClientUserLoginDto loginDto)

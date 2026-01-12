@@ -96,7 +96,7 @@ export const startSessionService = async (
 						?.statusCode;
 
 					if (statusCode === DisconnectReason.loggedOut) {
-						await prisma.session.deleteMany({
+						await prisma.sessions.deleteMany({
 							where: { sessionId: userId },
 						});
 

@@ -11,7 +11,7 @@ import { registerJwt } from "./plugins/jwt";
 import { registerSwagger } from "./plugins/swagger";
 import { whatsappRoutes } from "./routes/whatsapp";
 
-const server = fastify().withTypeProvider<ZodTypeProvider>();
+const server = fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
 server.setValidatorCompiler(validatorCompiler);
 server.setSerializerCompiler(serializerCompiler);
 server.setErrorHandler(errorHandler);

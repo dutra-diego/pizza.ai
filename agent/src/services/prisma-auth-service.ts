@@ -22,7 +22,7 @@ export default async function prismaAuthService(
 		try {
 			const dataString = JSON.stringify(data, BufferJSON.replacer);
 
-			await prisma.session.upsert({
+			await prisma.sessions.upsert({
 				where: {
 					sessionId_credId: {
 						sessionId: sessionID,
@@ -45,7 +45,7 @@ export default async function prismaAuthService(
 
 	const readData = async (credId: string): Promise<BaileysAuthData | null> => {
 		try {
-			const result = await prisma.session.findUnique({
+			const result = await prisma.sessions.findUnique({
 				where: {
 					sessionId_credId: {
 						sessionId: sessionID,
@@ -65,7 +65,7 @@ export default async function prismaAuthService(
 
 	const removeData = async (credId: string): Promise<void> => {
 		try {
-			await prisma.session.delete({
+			await prisma.sessions.delete({
 				where: {
 					sessionId_credId: {
 						sessionId: sessionID,
@@ -73,7 +73,7 @@ export default async function prismaAuthService(
 					},
 				},
 			});
-		} catch {}
+		} catch { }
 	};
 
 	const credsData = await readData("creds");

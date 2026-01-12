@@ -20,8 +20,8 @@ namespace Client.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ClientUserDTO clientUser)
         {
-            var token = await _clientUserService.CreateAsync(clientUser);
-            return Ok(new { token });
+            await _clientUserService.CreateAsync(clientUser);
+            return NoContent();
         }
 
         [HttpPost("login")]

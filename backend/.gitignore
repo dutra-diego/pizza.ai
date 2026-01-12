@@ -44,5 +44,4 @@ bld/
 # User Secrets
 # (UserSecrets are stored outside the project folder, but ensuring no local config leaks)
 appsettings.Development.json
-appsettings.Local.json
 secrets.json

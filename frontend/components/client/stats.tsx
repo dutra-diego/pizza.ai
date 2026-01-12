@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bot, BotOff, ChartNoAxesCombined, Loader2 } from "lucide-react";
 import { useState } from "react";
 import QRCode from "react-qr-code";
@@ -19,15 +19,22 @@ import {
 
 export function Stats({ enterprise }: { enterprise: IGetEnterprise }) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const queryClient = useQueryClient();
 	const { data: sessionWhatsApp } = useQuery({
 		queryKey: ["session-whatsapp"],
 		queryFn: GetSessionWhatsApp,
 	});
 	const startSessionMutation = useMutation({
 		mutationFn: StartSessionWhatsApp,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["session-whatsapp"] });
+		},
 	});
 	const stopSessionMutation = useMutation({
 		mutationFn: StopSessionWhatsApp,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["session-whatsapp"] });
+		},
 	});
 
 	function handleActivate() {

@@ -8,7 +8,7 @@ export async function registerSwagger(server: FastifyInstance) {
 		openapi: {
 			openapi: "3.1.0",
 			info: {
-				title: "Multi-Agent WhatsApp API",
+				title: "WhatsApp API",
 				description: "API for managing multiple WhatsApp bots",
 				version: "1.0.0",
 			},

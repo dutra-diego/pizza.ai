@@ -1,11 +1,8 @@
-import https from "node:https";
 import axios, { type AxiosInstance } from "axios";
+import { env } from "../config/env";
 
 export const api: AxiosInstance = axios.create({
-	baseURL: "https://localhost:7180",
+	baseURL: env.BACKEND_URL,
 	timeout: 5000,
-	httpsAgent: new https.Agent({
-		rejectUnauthorized: false,
-	}),
 });
 

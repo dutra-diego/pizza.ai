@@ -4,9 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["session"]
 }
 
-model Session {
+model Sessions {
   id        String   @id @default(cuid())
   sessionId String
   credId    String
@@ -16,4 +17,5 @@ model Session {
 
   @@unique([sessionId, credId], map: "unique_credid_per_session")
   @@index([sessionId])
+  @@schema("session")
 }

@@ -7,7 +7,7 @@ export const JwtSchema = z
 		sub: z.string().min(1).optional(),
 	})
 	.refine((payload) => payload.userId || payload.nameid || payload.sub, {
-		message: "userId ausente no token",
+		message: "userId, nameid or sub is required",
 	});
 
 export type JwtType = z.infer<typeof JwtSchema>;

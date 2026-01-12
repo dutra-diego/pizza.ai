@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import axios from "axios";
 
 export interface IGetEnterprise {
 	name: string;
@@ -10,6 +11,13 @@ export interface IGetEnterprise {
 }
 
 export async function GetEnterprise(): Promise<IGetEnterprise | null> {
-	const response = await api.get("/enterprises");
-	return response.data;
+	try {
+		const response = await api.get("/enterprises");
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error) && error.response?.status === 404) {
+			return null;
+		}
+		throw error;
+	}
 }

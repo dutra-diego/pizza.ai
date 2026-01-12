@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Restoring packages..."
+dotnet restore Client/Client.csproj
+
 echo "Applying migrations..."
 dotnet ef database update --project Client/Client.csproj --connection "$ConnectionStrings__DefaultConnection"
 

@@ -4,22 +4,23 @@ services:
     container_name: pizza-ai-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-mult-agent}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-pizza-ai}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d pizza-ai"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
     container_name: pizza-ai-backend
     restart: unless-stopped
     ports:
@@ -27,13 +28,15 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
-      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-mult-agent};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres};SearchPath=client"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-pizza-ai};Username=${POSTGRES_USER:-admin};Password=${POSTGRES_PASSWORD:-admin};SearchPath=client"
       Jwt__Key: ${JWT_KEY:-your-super-secure-key-min-32-chars}
-      Jwt__Issuer: ${JWT_ISSUER:-mult-agent}
+      Jwt__Issuer: ${JWT_ISSUER:-pizza-ai}
       Jwt__Audience: ${JWT_AUDIENCE:-api300}
       Jwt__ExpirationMinutes: ${JWT_EXPIRATION:-360}
     volumes:
       - ./backend:/app
+      - /app/Client/bin
+      - /app/Client/obj
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,10 +50,11 @@ services:
     environment:
       PORT: 8080
       HOST: 0.0.0.0
-      DATABASE_URL_PRISMA: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-mult-agent}?schema=agent"
-      DATABASE_URL_MASTRA: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-mult-agent}?schema=mastra"
+      DATABASE_URL_PRISMA: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-pizza-ai}?schema=session"
+      DATABASE_URL_MASTRA: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-pizza-ai}?schema=mastra"
       JWT_KEY: ${JWT_KEY:-your-super-secure-key-min-32-chars}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      BACKEND_URL: "http://backend:7180"
     volumes:
       - ./agent:/app
       - /app/node_modules
