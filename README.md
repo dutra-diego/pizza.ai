@@ -60,13 +60,13 @@ $ npm run dev
 
 ## 📸 Screenshots
 
-![Imagem do qrcode](https://imgur.com/8xLlnZe)
+![Imagem do qrcode](https://i.imgur.com/8xLlnZe.png).
 
-![Imagem dos pedidos](https://imgur.com/FBTJrUz)
+![Imagem dos pedidos](https://i.imgur.com/FBTJrUz.png).
 
-![Imagem dos produtos e sabores](https://i.imgur.com/KHTWHcf.png)
+![Imagem dos produtos e sabores](https://i.imgur.com/KHTWHcf.png).
 
-![Imagem da home](https://imgur.com/j6Svs8m)
+![Imagem da home](https://i.imgur.com/j6Svs8m.png).
 
 ## 👨‍💻 Autor
 
