@@ -2,10 +2,10 @@
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { removeAuthToken } from "@/lib/cookies";
+import { logout } from "@/app/actions/auth";
 import { Button } from "../ui/button";
 import {
 	Sheet,
@@ -18,7 +18,6 @@ import {
 
 export function Navbar() {
 	const pathname = usePathname();
-	const router = useRouter();
 	const [mounted, setMounted] = useState(false);
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const { resolvedTheme, setTheme } = useTheme();
@@ -36,8 +35,7 @@ export function Navbar() {
 	}, []);
 
 	const handleLogout = () => {
-		removeAuthToken();
-		router.push("/");
+		logout();
 	};
 
 	return (

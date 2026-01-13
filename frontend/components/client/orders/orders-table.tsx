@@ -14,7 +14,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import type { Order } from "./columns-table";
+import { Order } from "@/types/orders";
+
 
 interface DataTableProps<TData> {
 	columns: ColumnDef<TData>[];
@@ -47,8 +48,8 @@ export function OrdersTable<TData>({
 							{headerGroup.headers.map((header) => {
 								const metaClassName = (
 									header.column.columnDef.meta as
-										| { className?: string }
-										| undefined
+									| { className?: string }
+									| undefined
 								)?.className;
 								return (
 									<TableHead
@@ -59,9 +60,9 @@ export function OrdersTable<TData>({
 										{header.isPlaceholder
 											? null
 											: flexRender(
-													header.column.columnDef.header,
-													header.getContext(),
-												)}
+												header.column.columnDef.header,
+												header.getContext(),
+											)}
 									</TableHead>
 								);
 							})}
@@ -78,8 +79,8 @@ export function OrdersTable<TData>({
 								{row.getVisibleCells().map((cell) => {
 									const metaClassName = (
 										cell.column.columnDef.meta as
-											| { className?: string }
-											| undefined
+										| { className?: string }
+										| undefined
 									)?.className;
 									return (
 										<TableCell
