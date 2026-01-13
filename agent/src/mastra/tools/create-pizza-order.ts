@@ -30,7 +30,7 @@ export const createOrder = createTool({
 			deliveryAddress: context.deliveryAddress,
 			phone: context.phone,
 			orderProduct: context.orderProduct,
-			status: "In production",
+			status: "Em produção",
 		});
 
 		return {

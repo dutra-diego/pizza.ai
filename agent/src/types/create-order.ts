@@ -23,7 +23,7 @@ export const CreateOrderSchema = z.object({
 		)
 		.min(1)
 		.describe("List of order products"),
-	status: z.string().default("In production").describe("Order status"),
+	status: z.string().default("Em produção").describe("Order status"),
 });
 
 export type CreateOrderType = z.infer<typeof CreateOrderSchema>;
