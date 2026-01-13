@@ -4,7 +4,7 @@ interface ISessionWhatsAppResponse {
 	connected: boolean;
 }
 
-export async function GetSessionWhatsApp(): Promise<ISessionWhatsAppResponse> {
+export async function getSessionWhatsApp(): Promise<ISessionWhatsAppResponse> {
 	const result = await secondaryApi.get("/sessions");
 	return result.data;
 }

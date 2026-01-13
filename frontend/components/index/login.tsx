@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuthModal } from "@/contexts/auth";
 import { setAuthToken } from "@/lib/cookies";
-import { LoginService } from "@/services/login-service";
+import { loginService } from "@/services/login-service";
 import { Button } from "../ui/button";
 
 const loginSchema = z.object({
@@ -31,7 +31,7 @@ export function Login() {
 		isPending,
 		isError,
 	} = useMutation({
-		mutationFn: LoginService,
+		mutationFn: loginService,
 		onSuccess: ({ token }) => {
 			setAuthToken(token);
 			close();
@@ -63,6 +63,7 @@ export function Login() {
 					autoComplete="email"
 					{...register("email")}
 					className="rounded-lg  px-2 text-md bg-primary-foreground  border-accent text-accent-foreground dark:text-secondary h-10"
+					disabled={isPending}
 				/>
 				{errors.email && (
 					<span className="text-sm text-red-500">{errors.email.message}</span>
@@ -76,6 +77,7 @@ export function Login() {
 					autoComplete="current-password"
 					{...register("password")}
 					className="rounded-lg  px-2 text-lg bg-primary-foreground  border-accent text-accent-foreground dark:text-secondary h-10"
+					disabled={isPending}
 				/>
 				{errors.password && (
 					<span className="text-sm text-red-500">
@@ -89,7 +91,9 @@ export function Login() {
 						</span>
 					</Link>
 					{isError && (
-						<p className="text-sm text-red-500 text-center pb-2">Ocorreu um erro inesperado</p>
+						<p className="text-sm text-red-500 text-center pb-2">
+							Ocorreu um erro inesperado
+						</p>
 					)}
 					<div className="flex justify-between w-60 md:w-80">
 						<Button

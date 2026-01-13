@@ -1,16 +1,8 @@
-import { api } from "@/lib/axios";
 import axios from "axios";
+import { api } from "@/lib/axios";
+import type { Enterprise } from "@/types/enterprises";
 
-export interface IGetEnterprise {
-	name: string;
-	address: string;
-	ordersLast7Days: number;
-	ordersLast14Days: number;
-	ordersLast30Days: number;
-	totalRevenueLast30Days: number;
-}
-
-export async function GetEnterprise(): Promise<IGetEnterprise | null> {
+export async function getEnterprise(): Promise<Enterprise | null> {
 	try {
 		const response = await api.get("/enterprises");
 		return response.data;

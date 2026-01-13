@@ -18,7 +18,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { UpdateFlavor } from "@/services/update-flavor";
+import { updateFlavor } from "@/services/update-flavor";
 import type { Flavor } from "./columns-table";
 
 const flavorSchema = z.object({
@@ -50,7 +50,7 @@ export function EditFlavor({ flavor }: EditFlavorProps) {
 	});
 
 	const { mutate, isPending } = useMutation({
-		mutationFn: (data: Partial<FormData>) => UpdateFlavor(flavor.id, data),
+		mutationFn: (data: Partial<FormData>) => updateFlavor(flavor.id, data),
 		onSuccess: (_, updatedData) => {
 			queryClient.setQueryData<Flavor[]>(["flavors", flavor.productId], (old) =>
 				old?.map((f) => (f.id === flavor.id ? { ...f, ...updatedData } : f)),

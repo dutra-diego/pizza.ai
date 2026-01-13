@@ -6,7 +6,7 @@ interface IRegisterData {
 	password: string;
 }
 
-export async function RegisterService(
+export async function registerService(
 	data: IRegisterData,
 ): Promise<{ token: string }> {
 	const result = await api.post("/client-users", data);

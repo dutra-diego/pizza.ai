@@ -5,7 +5,7 @@ interface ILoginData {
 	password: string;
 }
 
-export async function LoginService(
+export async function loginService(
 	data: ILoginData,
 ): Promise<{ token: string }> {
 	const result = await api.post("/client-users/login", data);

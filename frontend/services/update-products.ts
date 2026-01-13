@@ -1,12 +1,7 @@
 import { api } from "@/lib/axios";
+import type { UpdateProduct } from "@/types/products";
 
-interface IUpdateProduct {
-	name?: string;
-	price?: number;
-	isAvailable?: boolean;
-}
-
-export async function UpdateProducts(id: string, data: IUpdateProduct) {
+export async function updateProducts(id: string, data: UpdateProduct) {
 	const result = api.patch(`/products/${id}`, data);
 	return result;
 }

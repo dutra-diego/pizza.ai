@@ -3,9 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { CreateEnterprise } from "@/services/create-enterprise";
-import type { IGetEnterprise } from "@/services/get-enterprise";
-import { Button } from "../ui/button";
+import { createEnterprise } from "@/services/create-enterprises";
+import { Button } from "../../ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -13,8 +12,8 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
+} from "../../ui/dialog";
+import { Input } from "../../ui/input";
 
 const enterpriseSchema = z.object({
 	name: z.string().min(1, "Nome é obrigatório"),
@@ -37,7 +36,7 @@ export function CreateEnterpriseDialog() {
 	});
 
 	const { mutate, isPending } = useMutation({
-		mutationFn: CreateEnterprise,
+		mutationFn: createEnterprise,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["enterprise"],

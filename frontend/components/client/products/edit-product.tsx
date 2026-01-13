@@ -18,7 +18,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { UpdateProducts } from "@/services/update-products";
+import { updateProducts } from "@/services/update-products";
 
 const productSchema = z.object({
 	name: z.string().min(1, "Nome é obrigatório"),
@@ -48,7 +48,7 @@ export function EditProduct({ product }: EditProductProps) {
 	});
 
 	const { mutate, isPending } = useMutation({
-		mutationFn: (data: Partial<FormData>) => UpdateProducts(product.id, data),
+		mutationFn: (data: Partial<FormData>) => updateProducts(product.id, data),
 		onSuccess: (_, updatedData) => {
 			queryClient.setQueryData<Product[]>(["products"], (old) =>
 				old?.map((p) => (p.id === product.id ? { ...p, ...updatedData } : p)),

@@ -26,8 +26,8 @@ namespace Client.Controllers
             if (!Guid.TryParse(userId, out var parsedUserId))
                 return Unauthorized(new { error = "Invalid token" });
 
-            await _productService.CreateAsync(parsedUserId, product);
-            return NoContent();
+            var createdProduct = await _productService.CreateAsync(parsedUserId, product);
+            return Created(string.Empty, createdProduct);
         }
 
         [HttpGet]

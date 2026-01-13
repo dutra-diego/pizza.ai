@@ -2,7 +2,7 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { clientOnly } from "@/lib/client-only";
-import { GetFlavors } from "@/services/get-flavors";
+import { getFlavors } from "@/services/get-flavors";
 import { AddFlavor } from "./flavors/add-flavor";
 import { flavorColumns } from "./flavors/columns-table";
 import { FlavorsTable } from "./flavors/flavors-table";
@@ -10,7 +10,7 @@ import { FlavorsTable } from "./flavors/flavors-table";
 function FlavorsDataInner({ productId }: { productId: string }) {
 	const { data: flavors } = useSuspenseQuery({
 		queryKey: ["flavors", productId],
-		queryFn: () => GetFlavors(productId),
+		queryFn: () => getFlavors(productId),
 	});
 
 	return <FlavorsTable columns={flavorColumns} data={flavors || []} />;

@@ -18,7 +18,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { CreateFlavor } from "@/services/create-flavor";
+import { createFlavor } from "@/services/create-flavors";
 import type { Flavor } from "./columns-table";
 
 const flavorSchema = z.object({
@@ -49,7 +49,7 @@ export function AddFlavor({ productId }: AddFlavorProps) {
 
 	const { mutate, isPending } = useMutation({
 		mutationFn: (data: FormData) =>
-			CreateFlavor({
+			createFlavor({
 				productId,
 				...data,
 			}),

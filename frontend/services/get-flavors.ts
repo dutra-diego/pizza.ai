@@ -1,6 +1,7 @@
 import { api } from "@/lib/axios";
+import type { Flavor } from "@/types/flavors";
 
-export async function GetFlavors(productId: string) {
-	const result = await api.get(`/flavors/${productId}`);
+export async function getFlavors(productId: string): Promise<Flavor[]> {
+	const result = await api.get<Flavor[]>(`/flavors/${productId}`);
 	return result.data;
 }

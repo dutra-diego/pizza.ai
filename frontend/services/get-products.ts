@@ -1,12 +1,7 @@
 import { api } from "@/lib/axios";
+import type { Product } from "@/types/products";
 
-interface IProduct {
-	id: string;
-	name: string;
-	price: number;
-	available: boolean;
-}
-export async function GetProducts(): Promise<IProduct[]> {
+export async function getProducts(): Promise<Product[]> {
 	const response = await api.get("/products");
 	return response.data;
 }

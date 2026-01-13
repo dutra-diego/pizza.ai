@@ -25,7 +25,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { CreateProduct } from "@/services/create-product";
+import { createProduct } from "@/services/create-products";
 
 const productSchema = z.object({
 	name: z.string().min(1, "Nome é obrigatório"),
@@ -60,18 +60,10 @@ export function AddProduct() {
 	});
 
 	const { mutate, isPending } = useMutation({
-		mutationFn: (data: FormData) => CreateProduct(data),
-		onSuccess: (newProduct, submittedData) => {
-			const productToAdd: Product = {
-				id: newProduct?.id ?? crypto.randomUUID(),
-				name: submittedData.name,
-				category: submittedData.category,
-				price: submittedData.price,
-				available: submittedData.available,
-				...newProduct,
-			};
+		mutationFn: (data: FormData) => createProduct(data),
+		onSuccess: (newProduct) => {
 			queryClient.setQueryData<Product[]>(["products"], (old) =>
-				old ? [...old, productToAdd] : [productToAdd],
+				old ? [...old, newProduct] : [newProduct],
 			);
 			reset();
 			setPriceDisplay("");

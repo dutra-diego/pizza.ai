@@ -15,10 +15,11 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { clientOnly } from "@/lib/client-only";
-import { GetOrders } from "@/services/get-orders";
-import { UpdateOrders } from "@/services/update-orders";
-import { columns, type Order, type OrderStatus } from "./orders/columns-table";
-import { OrdersTable } from "./orders/orders-table";
+import { getOrders } from "@/services/get-orders";
+import { updateOrders } from "@/services/update-orders";
+import type { Order, OrderStatus } from "@/types/orders";
+import { columns } from "../orders/columns-table";
+import { OrdersTable } from "../orders/orders-table";
 
 const statusFlow: Record<string, OrderStatus> = {
 	"Em produção": "Saiu para entrega",
@@ -36,12 +37,12 @@ function OrdersDataInner({ onSelectOrder }: OrdersDataProps) {
 
 	const { data: ordersData } = useSuspenseQuery({
 		queryKey: ["orders"],
-		queryFn: () => GetOrders(),
+		queryFn: () => getOrders(),
 	});
 
 	const updateMutation = useMutation({
-		mutationFn: ({ id, status }: { id: number; status: string }) =>
-			UpdateOrders(id, status),
+		mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
+			updateOrders(id, status),
 		onMutate: async ({ id, status }) => {
 			await queryClient.cancelQueries({ queryKey: ["orders"] });
 

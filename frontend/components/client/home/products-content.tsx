@@ -5,10 +5,10 @@ import { Suspense, useState } from "react";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { clientOnly } from "@/lib/client-only";
-import { GetProducts } from "@/services/get-products";
-import { AddProduct } from "./products/add-product";
-import { EditProduct } from "./products/edit-product";
-import { ProductFlavors } from "./products/product-flavors";
+import { getProducts } from "@/services/get-products";
+import { AddProduct } from "../products/add-product";
+import { EditProduct } from "../products/edit-product";
+import { ProductFlavors } from "../products/product-flavors";
 
 function ProductsListInner({
 	onSelectProduct,
@@ -17,7 +17,7 @@ function ProductsListInner({
 }) {
 	const { data: products } = useSuspenseQuery({
 		queryKey: ["products"],
-		queryFn: GetProducts,
+		queryFn: getProducts,
 	});
 
 	return (

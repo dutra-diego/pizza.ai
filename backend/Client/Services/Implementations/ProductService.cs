@@ -15,7 +15,7 @@ namespace Client.Services.Implementations
             _appDbContext = appDbContext;
         }
 
-        public async Task CreateAsync(Guid userId, ProductDto productDto)
+        public async Task<ResponseProductDto> CreateAsync(Guid userId, ProductDto productDto)
         {
             var enterpriseId = await _appDbContext.Enterprises
                 .Where(e => e.ClientUserId == userId)
@@ -36,6 +36,14 @@ namespace Client.Services.Implementations
 
             _appDbContext.Products.Add(newProduct);
             await _appDbContext.SaveChangesAsync();
+
+            return new ResponseProductDto(
+                newProduct.Id,
+                newProduct.Name,
+                newProduct.Category,
+                newProduct.Price,
+                newProduct.Available
+            );
         }
 
         public async Task<List<ResponseProductDto>> GetByUserIdAsync(Guid userId)
