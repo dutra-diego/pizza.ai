@@ -26,7 +26,11 @@ export function Login() {
 	} = useForm<z.infer<typeof loginSchema>>({
 		resolver: zodResolver(loginSchema),
 	});
-	const { mutate: loginMutate, isPending } = useMutation({
+	const {
+		mutate: loginMutate,
+		isPending,
+		isError,
+	} = useMutation({
 		mutationFn: LoginService,
 		onSuccess: ({ token }) => {
 			setAuthToken(token);
@@ -84,6 +88,9 @@ export function Login() {
 							Esqueceu sua senha?
 						</span>
 					</Link>
+					{isError && (
+						<p className="text-sm text-red-500 text-center pb-2">Ocorreu um erro inesperado</p>
+					)}
 					<div className="flex justify-between w-60 md:w-80">
 						<Button
 							variant="outline"

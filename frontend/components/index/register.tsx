@@ -26,7 +26,11 @@ export function Register() {
 		resolver: zodResolver(registerSchema),
 	});
 
-	const { mutate: registerMutate, isPending } = useMutation({
+	const {
+		mutate: registerMutate,
+		isPending,
+		isError,
+	} = useMutation({
 		mutationFn: RegisterService,
 		onSuccess: ({ token }) => {
 			setAuthToken(token);
@@ -89,6 +93,9 @@ export function Register() {
 					<span className="text-sm text-red-500">
 						{errors.password.message}
 					</span>
+				)}
+				{isError && (
+					<p className="text-sm text-red-500 text-center pb-2">Ocorreu um erro inesperado</p>
 				)}
 				<div className="flex justify-between w-60 md:w-80 pt-2">
 					<Button

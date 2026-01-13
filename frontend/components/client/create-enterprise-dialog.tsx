@@ -38,8 +38,10 @@ export function CreateEnterpriseDialog() {
 
 	const { mutate, isPending } = useMutation({
 		mutationFn: CreateEnterprise,
-		onSuccess: (newEnterprise) => {
-			queryClient.setQueryData<IGetEnterprise>(["enterprise"], newEnterprise);
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["enterprise"],
+			});
 		},
 	});
 
