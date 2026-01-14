@@ -32,7 +32,7 @@ o bot só responde no whatsapp se no inicio da mensagem tem "/bot", você pode r
 o código está no start-session-service.ts  
 ```if (text?.startsWith("/bot"))```.
 
-não se esqueça de configurar as variáveis de ambiente no arquivo .env e appsettings.Development.json, todos tem um exemplo no arquivo .env.example e appsettings.Development.json.example
+não se esqueça de configurar as variáveis de ambiente no arquivo .env e appsettings.Development.json, todos tem um exemplo no arquivo .env.example e appsettings.Development.json.example, o JWT dos arquivos devem ser iguais.
 
 
 ## 💻 Rodando localmente
