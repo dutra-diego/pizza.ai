@@ -30,6 +30,7 @@ export function Login() {
 		mutate: loginMutate,
 		isPending,
 		isError,
+		error,
 	} = useMutation({
 		mutationFn: loginService,
 		onSuccess: ({ token }) => {
@@ -38,6 +39,8 @@ export function Login() {
 			router.push("/client");
 		},
 	});
+	const isNotFound =
+		error && "response" in error && (error.response as { status?: number })?.status === 404;
 	const onSubmit = handleSubmit((data) => {
 		loginMutate(data);
 	});
@@ -92,7 +95,7 @@ export function Login() {
 					</Link>
 					{isError && (
 						<p className="text-sm text-red-500 text-center pb-2">
-							Ocorreu um erro inesperado
+							{isNotFound ? "Credenciais incorretas" : "Ocorreu um erro inesperado"}
 						</p>
 					)}
 					<div className="flex justify-between w-60 md:w-80">
