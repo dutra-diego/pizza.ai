@@ -100,6 +100,7 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await context.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS client");
+    await context.Database.MigrateAsync();
 }
 
 app.UseExceptionHandler();
